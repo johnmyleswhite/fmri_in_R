@@ -1,0 +1,343 @@
+\documentclass{beamer}
+
+\usepackage{beamerthemesplit}
+
+\title{Analysis of Function Magnetic Resonance Images in R}
+\author{John Myles White}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\section{The fMRI Approach}
+
+\frame
+{
+	\frametitle{What is fMRI?}
+	
+	Functional magnetic resonance imaging, usually referred to as fMRI, is a tool used to indirectly measure brain activity by measuring changes in the flow of oxygenated blood within small regions of the brain.
+}
+
+\frame
+{
+	\frametitle{Why Use fMRI?}
+
+	The goal of traditional fMRI research is the localization of functionality in the brain: for example, we may want to discover which regions  of the brain are primarily responsible for processing visual images.
+}
+
+\frame
+{
+	\frametitle{What Have We Learned from fMRI?}
+
+	A canonical result from recent fMRI research is the discovery that one region of the brain is unusually sensitive to images of natural scenes, while another region of the brain is unusually sensitive to images of faces.
+}
+
+\frame
+{
+	\frametitle{Types of Data}
+	
+	In fMRI, we generally work with two types of data:
+	
+	\begin{itemize}
+		\item{Anatomical data}
+		\item{Blood volume data, which I will call functional data or BOLD (Blood Oxygenation Level Dependent) data}
+	\end{itemize}
+}
+
+\frame
+{
+	\frametitle{A Sample Anatomical Image}
+  
+	\begin{center}
+		\includegraphics[scale = 0.75]{images/anatomical.jpg}
+	\end{center}
+}	
+
+\frame
+{
+	\frametitle{A Sample BOLD Image at Time T = 0s}
+  
+	\begin{center}
+ 		\includegraphics[scale = 0.75]{images/epi.jpg}
+	\end{center}
+}
+
+\frame
+{
+	\frametitle{A Sample BOLD Time Series from One Voxel}
+  
+	\begin{center}
+		\includegraphics[scale = 0.4]{images/time_series.jpg}
+	\end{center}
+}
+
+\section{Experimental Design}
+
+\frame
+{
+	\frametitle{Data Analytic Approach}
+	
+	To localize activity in the brain, we present a series of different stimuli over time and then regress the BOLD time series in every voxel against a predicted response derived from the stimulus time series using linear systems theory.
+}
+
+\frame
+{
+  \frametitle{A Sample Face Stimulus}
+
+  \begin{center}
+    \includegraphics[scale = 1.0]{images/face_stimulus.jpg}
+  \end{center}
+}
+
+\frame
+{
+  \frametitle{A Sample Place Stimulus}
+
+  \begin{center}
+    \includegraphics[scale = 0.3]{images/place_stimulus.jpg}
+  \end{center}
+}
+
+\frame
+{
+  \frametitle{A Sample Stimulus Time Series}
+
+  \begin{center}
+    \includegraphics[scale = 0.4]{images/stimulus_presentations.jpg}
+  \end{center}
+}
+
+\section{Linear Systems Theory}
+
+\frame
+{
+  \frametitle{Transforming Stimuli into Models of BOLD Signal}
+  
+  Before we can apply OLS regression to our problem, we need to understand how the brain time series corresponds to the stimulus time series. To do this, we assume that the brain is a linear signal processing system.
+}
+
+\frame
+{
+	\frametitle{Linear Systems Theory: The Big Ideas}
+
+	\begin{itemize}
+  		\item{Well-Defined Unit Impulse Response: The system has a canonical response $U$ to an input signal $S$}
+		\item{Linear Scaling: The response to $\alpha S$ is $\alpha U$}
+		\item{Time Invariance: The response to a time-shifted version of $S$ is a time-shifted version of $U$}
+	\end{itemize}
+}
+
+\frame
+{
+	\frametitle{Working with Linear Systems}
+	
+	The beauty of linear systems is a theorem that states that the response to any signal $S$ is the convolution of $S$ with the unit impulse response, $U$, where the convolution of two signals $f$ and $g$ is defined as:
+	
+	\[
+		c(f, g)(t) = \int_{- \infty}^{\infty} f(\tau)g(t - \tau) d\tau 
+	\]
+}
+
+\begin{frame}[fragile]
+	\frametitle{Convolution in R: Encoding the Unit Impulse}
+	
+	Suppose that we have an unit impulse response function that looks like this:
+	
+	\begin{verbatim}
+	u <- c(1, 3, 7, 4, 2, 0)
+	qplot(1:length(u), u, geom = 'line')
+	\end{verbatim}
+\end{frame}
+
+\frame
+{
+  \frametitle{U}
+  
+  \begin{center}
+    \includegraphics[scale = 0.4]{images/u.jpg}
+  \end{center}
+}
+
+\begin{frame}[fragile]
+	\frametitle{Convolution in R: Encoding the Input Signal}
+	
+	Suppose that we have an input signal that looks like this:
+	\begin{verbatim}
+	s <- c(0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, -1, 0, 0, 0)
+	qplot(1:length(s), s, geom = 'line')
+	\end{verbatim}
+\end{frame}
+
+\frame
+{
+  \frametitle{S}
+  
+  \begin{center}
+    \includegraphics[scale = 0.4]{images/s.jpg}
+  \end{center}
+}
+
+\begin{frame}[fragile]
+	\frametitle{Convolution in R: Computing the Convolution}
+	
+	Given u and s, their convolution is easy to compute:
+	
+	\begin{verbatim}
+	c <- convolve(s, rev(u), type = 'o')
+	qplot(1:length(c), c, geom = 'line')
+	\end{verbatim}
+\end{frame}
+
+\frame
+{
+  \frametitle{C}
+  
+  \begin{center}
+    \includegraphics[scale = 0.4]{images/c.jpg}
+  \end{center}
+}
+
+\begin{frame}[fragile]
+
+  \frametitle{Modeling the Brain's Unit Impulse Response in R}
+  
+  The unit impulse response used by neuroscientists is called the hemodynamic response function. One possible model, which I tend to use for simplicity, is the gamma variate model:
+  
+\[
+(\frac{t}{pq})^{p} e^{\frac{p - t}{q}}
+\]
+
+\begin{verbatim}
+GammaHRF <- function(t, p = 8.6, q = 0.547)
+{
+ return((t / (p * q))^p * exp(p - t / q))
+}
+\end{verbatim}
+\end{frame}
+
+\frame
+{
+	\frametitle{The Brain's Unit Impulse Response}
+  
+	\begin{center}
+		\includegraphics[scale = 0.4]{images/hrf.jpg}
+	\end{center}
+}
+
+\frame
+{
+	\frametitle{Convolving Our Stimuli}
+	
+	We can convolve our stimuli presentation time series with the HRF to get a prediction about the brain's response to our experimental manipulations:
+}
+
+\frame
+{
+	\frametitle{Theoretical Faces Response}
+  
+	\begin{center}
+		\includegraphics[scale = 0.4]{images/convolved_face_regressor.jpg}
+	\end{center}
+}
+
+\frame
+{
+	\frametitle{Theoretical Places Response}
+  
+	\begin{center}
+		\includegraphics[scale = 0.4]{images/convolved_place_regressor.jpg}
+	\end{center}
+}
+
+\section{Building a Linear Regression Model}
+
+\begin{frame}[fragile]
+	\frametitle{The Mass Univariate Approach: Single Voxel OLS Regressions}
+	
+	We can then regress the time series of BOLD signal in each voxel against these two regressors:
+	
+	\begin{verbatim}
+		lm(BOLD ~ ConvolvedPlaces + ConvolvedFaces)
+	\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Controlling for Artifacts}
+  
+	In practice, it proves useful to remove controllable artifacts from the time series when running these regressions. We usually do at least two things:
+  
+	 \begin{itemize}
+	  	\item{Detrend data using a Legendre polynomial basis}
+		\item{Correct for movement using rigid body transformations}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Detrending}
+  
+  	It is easy to add in a Legendre polynomial basis to any regression in R using poly():
+	
+	\begin{verbatim}
+		lm(BOLD ~ poly(n) + ConvolvedPlaces + ConvolvedFaces)
+	\end{verbatim}
+  
+  	We only need to agree upon a value for the polynomial order n. I generally will use a value between 2 and 6 depending upon the length of the EPI time series.
+\end{frame}
+
+\frame
+{
+	\frametitle{Rigid Body Transformations}
+	
+	Computing the optimal rigid body transformations to correct for head movement is more complex, so I'll skip this step. You would generally use something like optimize() to minimize the change in signal intensity between successive EPI images.
+}
+
+\begin{frame}[fragile]
+	\frametitle{Final Linear Model}
+	
+  	\begin{verbatim}
+		fit <- lm(BOLD ~ poly(n) + MovementCorrection
+		                  + ConvolvedPlaces + ConvolvedFaces)
+	\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Run Contrast Tests}
+	
+	Given the results from lm(), you can identify all of the voxels in which the contrast
+	
+	\begin{verbatim}
+		coef(fit)[[`ConvolvedPlaces']]
+		 - coef(fit)[[`ConvolvedFaces']]
+	\end{verbatim}
+	
+	is significantly different from 0. All the voxels in which this occurs will be assumed to be more sensitive to places than to faces.
+\end{frame}
+
+\frame
+{
+	\frametitle{Visualize Results}
+
+	The results from visualizing the t-stat for this contrast in every voxel look something like this:
+	
+	\begin{center}
+		\includegraphics[scale = 0.6]{images/contrast_results.jpg}
+	\end{center}
+}
+
+\section{Alternative Approaches}
+
+\frame
+{
+	\frametitle{Other Possible Approaches}
+  
+	You can approach this problem in a variety of other ways as well:
+	
+	\begin{itemize}
+		\item{Run robust regressions instead of OLS regressions using rlm() from the MASS package.}
+		\item{Classify inputs using the signal from many voxels with SVM's or another classifier using the caret package.}
+		\item{Run autoregressive models to account for the autocorrelation in the BOLD signal using ar() or other time series functions.}
+	\end{itemize}
+}
+
+\end{document}
