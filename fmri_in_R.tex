@@ -68,7 +68,7 @@
 	\frametitle{A Sample BOLD Time Series from One Voxel}
   
 	\begin{center}
-		\includegraphics[scale = 0.4]{images/time_series.jpg}
+		\includegraphics[scale = 0.35]{images/time_series.jpg}
 	\end{center}
 }
 
@@ -104,7 +104,7 @@
   \frametitle{A Sample Stimulus Time Series}
 
   \begin{center}
-    \includegraphics[scale = 0.4]{images/stimulus_presentations.jpg}
+    \includegraphics[scale = 0.35]{images/stimulus_presentations.jpg}
   \end{center}
 }
 
@@ -146,7 +146,7 @@
 	
 	\begin{verbatim}
 	u <- c(1, 3, 7, 4, 2, 0)
-	qplot(1:length(u), u, geom = 'line')
+	qplot(1:length(u), u, geom = `line')
 	\end{verbatim}
 \end{frame}
 
@@ -155,7 +155,7 @@
   \frametitle{U}
   
   \begin{center}
-    \includegraphics[scale = 0.4]{images/u.jpg}
+    \includegraphics[scale = 0.35]{images/u.jpg}
   \end{center}
 }
 
@@ -165,7 +165,7 @@
 	Suppose that we have an input signal that looks like this:
 	\begin{verbatim}
 	s <- c(0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, -1, 0, 0, 0)
-	qplot(1:length(s), s, geom = 'line')
+	qplot(1:length(s), s, geom = `line')
 	\end{verbatim}
 \end{frame}
 
@@ -174,7 +174,7 @@
   \frametitle{S}
   
   \begin{center}
-    \includegraphics[scale = 0.4]{images/s.jpg}
+    \includegraphics[scale = 0.35]{images/s.jpg}
   \end{center}
 }
 
@@ -184,8 +184,8 @@
 	Given u and s, their convolution is easy to compute:
 	
 	\begin{verbatim}
-	c <- convolve(s, rev(u), type = 'o')
-	qplot(1:length(c), c, geom = 'line')
+	c <- convolve(s, rev(u), type = `o')
+	qplot(1:length(c), c, geom = `line')
 	\end{verbatim}
 \end{frame}
 
@@ -194,7 +194,7 @@
   \frametitle{C}
   
   \begin{center}
-    \includegraphics[scale = 0.4]{images/c.jpg}
+    \includegraphics[scale = 0.35]{images/c.jpg}
   \end{center}
 }
 
@@ -221,7 +221,7 @@ GammaHRF <- function(t, p = 8.6, q = 0.547)
 	\frametitle{The Brain's Unit Impulse Response}
   
 	\begin{center}
-		\includegraphics[scale = 0.4]{images/hrf.jpg}
+		\includegraphics[scale = 0.35]{images/hrf.jpg}
 	\end{center}
 }
 
@@ -237,7 +237,7 @@ GammaHRF <- function(t, p = 8.6, q = 0.547)
 	\frametitle{Theoretical Faces Response}
   
 	\begin{center}
-		\includegraphics[scale = 0.4]{images/convolved_face_regressor.jpg}
+		\includegraphics[scale = 0.35]{images/convolved_face_regressor.jpg}
 	\end{center}
 }
 
@@ -246,7 +246,7 @@ GammaHRF <- function(t, p = 8.6, q = 0.547)
 	\frametitle{Theoretical Places Response}
   
 	\begin{center}
-		\includegraphics[scale = 0.4]{images/convolved_place_regressor.jpg}
+		\includegraphics[scale = 0.35]{images/convolved_place_regressor.jpg}
 	\end{center}
 }
 
